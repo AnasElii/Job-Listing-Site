@@ -1,0 +1,30 @@
+{
+  "name": "cryptojob",
+  "version": "1.0.0",
+  "description": " full-stack remote job board application on the Ethereum a blockchain",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AnasElii/Job-Listing-Site.git"
+  },
+  "keywords": [
+    "Smart",
+    "Contract",
+    "blockchain"
+  ],
+  "author": "Anas El",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AnasElii/Job-Listing-Site/issues"
+  },
+  "homepage": "https://github.com/AnasElii/Job-Listing-Site#readme",
+  "dependencies": {
+    "hardhat": "^2.22.3"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0"
+  }
+}
