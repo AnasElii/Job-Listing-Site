@@ -190,31 +190,36 @@ contract SolJobs {
     }
 
     function approveApplication(uint applicationId) external {
-
         JobApplication storage application = jobApplications[applicationId];
         JobOffer storage jobOffer = jobOffers[application.jobOfferId];
-        
-        require(jobOffer.jobOfferStatus == JobOfferStatus.Open, applicationNotOpenMSG);
-        require(jobOffer.numberHired < jobOffer.numberOfMaxHires, jobMaxedOutHiresMSG);
-        require(application.status == JobApplicationStatus.Pending, jobIsNoLongerOpenMSG);
+
+        require(
+            jobOffer.jobOfferStatus == JobOfferStatus.Open,
+            applicationNotOpenMSG
+        );
+        require(
+            jobOffer.numberHired < jobOffer.numberOfMaxHires,
+            jobMaxedOutHiresMSG
+        );
+        require(
+            application.status == JobApplicationStatus.Pending,
+            jobIsNoLongerOpenMSG
+        );
 
         // Change the application status to approve
         application.status = JobApplicationStatus.Approved;
         jobOffer.numberHired++;
 
         // Close job offer if the hiers max number is reached
-         if (
-            jobOffer.numberHired ==
-            jobOffer.numberOfMaxHires
-        ) {
+        if (jobOffer.numberHired == jobOffer.numberOfMaxHires) {
             jobOffer.jobOfferStatus = JobOfferStatus.Filled;
         }
-
     }
 
-    function rejectApplication(uint jobOfferId, uint applictionId) external{
-        JobOffer storage jobOffer = jobOffers[jobOfferId];   
-        application[applicationId].status = JobApplicationStatus.Rejetcted;
-    }
+    function rejectApplication(uint applicationId) external {
+        JobApplication storage application = jobApplications[applicationId];
 
+        // Chamge the application status to rejected
+        application.status = JobApplicationStatus.Rejetcted;
+    }
 }

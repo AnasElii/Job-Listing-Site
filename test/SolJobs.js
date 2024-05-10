@@ -333,4 +333,174 @@ describe("Jobs Contract", function () {
 
     });
 
+    describe("Approve and Reject Application", function () {
+
+        async function createAJobeOffer(jContract, addr1) {
+            // Create a job offer
+            const title = "Blockchain Fullstack Developer";
+            const offerDescription = "This is a description for the blockchain fullstack devloper job offer";
+            const compensation = 10;
+            const numberOfMaxHires = 2;
+
+            await jContract.connect(addr1).createJobOffer(title, offerDescription, compensation, numberOfMaxHires);
+            return await jContract.jobOffers(0);
+        }
+
+        describe("Approve Application", function () {
+
+            it("Shold approve the appliaction", async function () {
+                const { jContract, addr1, addr2, addr3 } = await loadFixture(initialize);
+
+                // Create a creator profile
+                const email = "email@mail.com";
+                const name = "Anas El";
+                const tagline = "Aninoss";
+                const description = "This is a small description";
+
+                await jContract.connect(addr1).createCreatorProfile(email, name, tagline, description);
+                const jobOffer = await createAJobeOffer(jContract, addr1);
+
+                // Create an applicant profile
+                const profileEmail = "profileEmail@mail.com";
+                const location = "Kenitra";
+                const bio = "This is a small description";
+
+                await jContract.connect(addr2).createApplicantProfile(profileEmail, name, location, bio);
+                await jContract.connect(addr3).createApplicantProfile(profileEmail + "somthing", name, location, bio);
+
+                // Create an Application
+                const jobOfferId = jobOffer.id;
+                const coverLetter = "This is the job application cover letter";
+
+                await jContract.connect(addr2).createJobApplication(jobOfferId, coverLetter);
+                await jContract.connect(addr3).createJobApplication(jobOfferId, coverLetter);
+
+                // aprove application
+                await jContract.connect(addr1).approveApplication(0);
+                await jContract.connect(addr1).approveApplication(1);
+
+                const application = await jContract.jobApplications(0);
+                expect(application.status).to.equal(1);
+
+            });
+
+            it("Shold faild to add another application after reaching the max heir number", async function () {
+                const { jContract, owner, addr1, addr2, addr3 } = await loadFixture(initialize);
+
+                // Create a creator profile
+                const email = "email@mail.com";
+                const name = "Anas El";
+                const tagline = "Aninoss";
+                const description = "This is a small description";
+
+                await jContract.connect(owner).createCreatorProfile(email, name, tagline, description);
+                const jobOffer = await createAJobeOffer(jContract, owner);
+
+                // Create an applicant profile
+                const profileEmail = "profileEmail@mail.com";
+                const location = "Kenitra";
+                const bio = "This is a small description";
+
+                await jContract.connect(addr1).createApplicantProfile(profileEmail, name, location, bio);
+                await jContract.connect(addr2).createApplicantProfile(profileEmail + "somthing_1", name, location, bio);
+                await jContract.connect(addr3).createApplicantProfile(profileEmail + "somthing_2", name, location, bio);
+
+                // Create an Application
+                const jobOfferId = jobOffer.id;
+                const coverLetter = "This is the job application cover letter";
+
+                await jContract.connect(addr1).createJobApplication(jobOfferId, coverLetter);
+                await jContract.connect(addr2).createJobApplication(jobOfferId, coverLetter);
+                await jContract.connect(addr3).createJobApplication(jobOfferId, coverLetter);
+
+                // aprove application
+                await jContract.connect(owner).approveApplication(0);
+                await jContract.connect(owner).approveApplication(1);
+
+                await expect(jContract.connect(owner).approveApplication(2))
+                    .to.be.revertedWith("The application is not open!");
+
+            });
+
+            it("Shold faild to add another application after reaching the max heir number", async function () {
+                const { jContract, owner, addr1, addr2, addr3 } = await loadFixture(initialize);
+
+                // Create a creator profile
+                const email = "email@mail.com";
+                const name = "Anas El";
+                const tagline = "Aninoss";
+                const description = "This is a small description";
+
+                await jContract.connect(owner).createCreatorProfile(email, name, tagline, description);
+                const jobOffer = await createAJobeOffer(jContract, owner);
+
+                // Create an applicant profile
+                const profileEmail = "profileEmail@mail.com";
+                const location = "Kenitra";
+                const bio = "This is a small description";
+
+                await jContract.connect(addr1).createApplicantProfile(profileEmail, name, location, bio);
+                await jContract.connect(addr2).createApplicantProfile(profileEmail + "somthing_1", name, location, bio);
+                await jContract.connect(addr3).createApplicantProfile(profileEmail + "somthing_2", name, location, bio);
+
+                // Create an Application
+                const jobOfferId = jobOffer.id;
+                const coverLetter = "This is the job application cover letter";
+
+                await jContract.connect(addr1).createJobApplication(jobOfferId, coverLetter);
+                await jContract.connect(addr2).createJobApplication(jobOfferId, coverLetter);
+                await jContract.connect(addr3).createJobApplication(jobOfferId, coverLetter);
+
+                // aprove application
+                await jContract.connect(owner).approveApplication(0);
+
+                await expect(jContract.connect(owner).approveApplication(0))
+                    .to.be.revertedWith("The job offer is no longer accepting applications!");
+
+            });
+
+        });
+
+        describe("Reject Application", function () {
+
+            it("Shold reject the appliaction", async function () {
+                const { jContract, addr1, addr2, addr3 } = await loadFixture(initialize);
+
+                // Create a creator profile
+                const email = "email@mail.com";
+                const name = "Anas El";
+                const tagline = "Aninoss";
+                const description = "This is a small description";
+
+                await jContract.connect(addr1).createCreatorProfile(email, name, tagline, description);
+                const jobOffer = await createAJobeOffer(jContract, addr1);
+
+                // Create an applicant profile
+                const profileEmail = "profileEmail@mail.com";
+                const location = "Kenitra";
+                const bio = "This is a small description";
+
+                await jContract.connect(addr2).createApplicantProfile(profileEmail, name, location, bio);
+                await jContract.connect(addr3).createApplicantProfile(profileEmail + "somthing", name, location, bio);
+
+                // Create an Application
+                const jobOfferId = jobOffer.id;
+                const coverLetter = "This is the job application cover letter";
+
+                await jContract.connect(addr2).createJobApplication(jobOfferId, coverLetter);
+                await jContract.connect(addr3).createJobApplication(jobOfferId, coverLetter);
+
+                // aprove application
+                await jContract.connect(addr1).rejectApplication(0);
+                await jContract.connect(addr1).rejectApplication(1);
+
+                const application = await jContract.jobApplications(0);
+                expect(application.status).to.equal(2);
+
+            });
+
+        });
+
+    });
+
 });
