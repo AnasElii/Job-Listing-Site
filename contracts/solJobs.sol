@@ -132,7 +132,8 @@ contract SolJobs {
     function createJobOffer(
         string calldata title,
         string calldata description,
-        uint compensation
+        uint compensation,
+        uint numberOfMaxHires
     ) external callerHasCreatorProfile {
         uint id = Counters.current(numberOfJobsCreated);
 
@@ -141,7 +142,9 @@ contract SolJobs {
         offer.title = title;
         offer.description = description;
         offer.compensation = compensation;
-        // offer.numberOfMaxHires = numberOfMaxHires;
+        offer.numberOfMaxHires = numberOfMaxHires;
+        offer.numberHired = 0;
+        offer.jobOfferStatus = JobOfferStatus.Open;
 
         CreatorProfile memory creator = creatorProfiles[msg.sender];
         offer.creator = creator;
@@ -179,12 +182,17 @@ contract SolJobs {
         application.applicant = applicant;
         application.status = JobApplicationStatus.Pending;
 
+        // Job Offer
+        require(
+            jobOffers[jobOfferId].jobOfferStatus == JobOfferStatus.Open,
+            jobIsNoLongerOpenMSG
+        );
         jobOffers[jobOfferId].applications.push(application);
         jobOffers[jobOfferId].numberHired++;
 
         if (
-            jobOffers[jobOfferId].numberOfMaxHires ==
-            jobOffers[jobOfferId].numberHired
+            jobOffers[jobOfferId].numberHired ==
+            jobOffers[jobOfferId].numberOfMaxHires
         ) {
             jobOffers[jobOfferId].jobOfferStatus = JobOfferStatus.Filled;
         }

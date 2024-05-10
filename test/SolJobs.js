@@ -141,7 +141,7 @@ describe("Jobs Contract", function () {
             const compensation = 10;
             const numberOfMaxHires = 2;
 
-            await jContract.connect(addr1).createJobOffer(title, offerDescription, compensation);
+            await jContract.connect(addr1).createJobOffer(title, offerDescription, compensation, numberOfMaxHires);
 
             const offer = await jContract.jobOffers(0);
             expect(offer.id).to.equal(0);
@@ -172,8 +172,9 @@ describe("Jobs Contract", function () {
             const title = "Blockchain Fullstack Developer";
             const offerDescription = "This is a description for the blockchain fullstack devloper job offer";
             const compensation = 10;
+            const numberOfMaxHires = 2;
 
-            await expect(jContract.connect(addr1).createJobOffer(title, offerDescription, compensation))
+            await expect(jContract.connect(addr1).createJobOffer(title, offerDescription, compensation, numberOfMaxHires))
                 .to.emit(jContract, "JobOfferCreated").withArgs(0);
 
 
@@ -194,8 +195,9 @@ describe("Jobs Contract", function () {
             const title = "Blockchain Fullstack Developer";
             const offerDescription = "This is a description for the blockchain fullstack devloper job offer";
             const componsation = 10;
+            const numberOfMaxHires = 2;
 
-            await expect(jContract.connect(addr2).createJobOffer(title, offerDescription, componsation))
+            await expect(jContract.connect(addr2).createJobOffer(title, offerDescription, componsation, numberOfMaxHires))
                 .to.be.revertedWith("Caller deos not have a creator profile!");
         });
 
@@ -208,8 +210,9 @@ describe("Jobs Contract", function () {
             const title = "Blockchain Fullstack Developer";
             const offerDescription = "This is a description for the blockchain fullstack devloper job offer";
             const compensation = 10;
+            const numberOfMaxHires = 2;
 
-            await jContract.connect(addr1).createJobOffer(title, offerDescription, compensation);
+            await jContract.connect(addr1).createJobOffer(title, offerDescription, compensation, numberOfMaxHires);
             return await jContract.jobOffers(0);
         }
 
@@ -326,6 +329,44 @@ describe("Jobs Contract", function () {
 
             await expect(jContract.connect(addr2).createJobApplication(jobOfferId, coverLetter))
                 .to.be.revertedWith("Job offer is closed!");
+        });
+
+        it("Shold faild to applied to a close job application", async function () {
+            const { jContract, addr1, addr2, addr3 } = await loadFixture(initialize);
+
+            // Create a creator profile
+            const email = "email@mail.com";
+            const name = "Anas El";
+            const tagline = "Aninoss";
+            const description = "This is a small description";
+
+            await jContract.connect(addr1).createCreatorProfile(email, name, tagline, description);
+
+            // Create a job offer
+            const jobOffer = await createAJobeOffer(jContract, addr1);
+
+            // Create an applicant profile
+            const profileEmail = "profileEmail@mail.com";
+            const location = "Kenitra";
+            const bio = "This is a small description";
+
+            await jContract.connect(addr2).createApplicantProfile(profileEmail, name, location, bio);
+            await jContract.connect(addr3).createApplicantProfile(profileEmail + "string", name, location, bio);
+
+            // Apply to the job offer
+            const jobOfferId = jobOffer.id;
+            const coverLetter = "This is the job application cover letter";
+
+            await jContract.connect(addr2).createJobApplication(jobOfferId, coverLetter);
+            await jContract.connect(addr3).createJobApplication(jobOfferId, coverLetter);
+
+            const jobOfferUpdate = await jContract.jobOffers(0);
+
+            expect(await jobOfferUpdate.jobOfferStatus).to.equal(1);
+
+            await expect(jContract.connect(addr2).createJobApplication(jobOfferId, coverLetter))
+                .to.be.revertedWith("Job offer is closed!");
+
         });
 
     });
