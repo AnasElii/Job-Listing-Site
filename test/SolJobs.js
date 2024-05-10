@@ -1,0 +1,333 @@
+const { expect } = require("chai");
+const { ethers } = require("hardhat");
+const { loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-helpers")
+
+describe("Jobs Contract", function () {
+    async function initialize() {
+        const [owner, addr1, addr2, addr3] = await ethers.getSigners();
+
+        const counters = await ethers.deployContract("Counters");
+        const jobsFactory = await ethers.getContractFactory("SolJobs", {
+            libraries: {
+                Counters: counters
+            }
+        });
+        const jContract = await jobsFactory.deploy();
+
+        return { jContract, owner, addr1, addr2, addr3 };
+    }
+
+    describe("Creator Operations", function () {
+        it("Shold Create The Creator Profile ", async function () {
+            const { jContract, addr1, addr3 } = await loadFixture(initialize);
+
+            const email = "email@mail.com";
+            const name = "Anas El";
+            const tagline = "Aninoss";
+            const description = "This is a small description";
+
+            await jContract.connect(addr1).createCreatorProfile(email, name, tagline, description);
+
+            const newCreator = await jContract.creatorProfiles(addr1.address);
+            expect(newCreator.id).to.equal(0);
+            expect(newCreator.email).to.equal(email);
+            expect(newCreator.name).to.equal(name);
+            expect(newCreator.tagline).to.equal(tagline);
+            expect(newCreator.description).to.equal(description);
+
+            // Test Default Arguments
+            expect(newCreator.creatorAddress).to.equal(addr1.address);
+            expect(newCreator.profileType).to.equal(0);
+            expect(newCreator.verified).to.equal(false);
+
+        });
+
+        it("Shold emit the event", async function () {
+            const { jContract, addr1 } = await loadFixture(initialize);
+
+            const email = "email3@mail.com";
+            const name = "Anas El";
+            const tagline = "Aninoss";
+            const description = "This is a small description";
+
+            await expect(jContract.connect(addr1).createCreatorProfile(email, name, tagline, description))
+                .to.emit(jContract, "CreatorProfileCreated").withArgs(0);
+        });
+
+        it("Shold fail if the address try to create more than one account", async function () {
+            const { jContract, addr1 } = await loadFixture(initialize);
+
+            const email = "email@mail.com";
+            const name = "Anas El";
+            const tagline = "Aninoss";
+            const description = "This is a small description";
+
+            await jContract.connect(addr1).createCreatorProfile(email, name, tagline, description);
+            await expect(jContract.connect(addr1).createCreatorProfile(email, name, tagline, description))
+                .to.be.revertedWith("Creator email or address alredy existes!");
+        });
+
+    })
+
+    describe("Applicant Operations", function () {
+
+        it("Shold Create The Applicant Profile", async function () {
+            const { jContract, addr2 } = await loadFixture(initialize);
+
+            const email = "email@mail.com";
+            const name = "Anas El";
+            const location = "Kenitra";
+            const bio = "This is a small description";
+
+            await jContract.connect(addr2).createApplicantProfile(email, name, location, bio);
+
+            const newApplicant = await jContract.applicantProfiles(addr2.address);
+            expect(newApplicant.id).to.equal(0);
+            expect(newApplicant.email).to.equal(email);
+            expect(newApplicant.name).to.equal(name);
+            expect(newApplicant.location).to.equal(location);
+            expect(newApplicant.bio).to.equal(bio);
+
+            // Test Default Arguments
+            expect(newApplicant.applicantAddress).to.equal(addr2.address);
+            expect(newApplicant.profileType).to.equal(1);
+        });
+
+        it("Shold emit the event", async function () {
+            const { jContract, addr2 } = await loadFixture(initialize);
+
+            const email = "email@mail.com";
+            const name = "Anas El";
+            const location = "Kenitra";
+            const bio = "This is a small description";
+
+            await expect(jContract.connect(addr2).createApplicantProfile(email, name, location, bio))
+                .to.emit(jContract, "ApplicantProfileCreated").withArgs(0);
+
+        });
+
+        it("Shold fail if the address or email alredy exists", async function () {
+            const { jContract, addr2 } = await loadFixture(initialize);
+
+            const email = "email@mail.com";
+            const name = "Anas El";
+            const location = "Kenitra";
+            const bio = "This is a small description";
+
+            await jContract.connect(addr2).createApplicantProfile(email, name, location, bio);
+
+            await expect(jContract.connect(addr2).createApplicantProfile(email, name, location, bio))
+                .to.be.revertedWith("Applicant email or address alredy existes!");
+        });
+
+    });
+
+    describe("Create Job Offer", function () {
+
+        it("Shold create a job offer", async function () {
+            const { jContract, addr1 } = await loadFixture(initialize);
+
+            // Create a creator profile
+            const email = "email@mail.com";
+            const name = "Anas El";
+            const tagline = "Aninoss";
+            const description = "This is a small description";
+
+            await jContract.connect(addr1).createCreatorProfile(email, name, tagline, description);
+
+            // Create a job offer
+            const title = "Blockchain Fullstack Developer";
+            const offerDescription = "This is a description for the blockchain fullstack devloper job offer";
+            const compensation = 10;
+            const numberOfMaxHires = 2;
+
+            await jContract.connect(addr1).createJobOffer(title, offerDescription, compensation);
+
+            const offer = await jContract.jobOffers(0);
+            expect(offer.id).to.equal(0);
+            expect(offer.title).to.equal(title);
+            expect(offer.description).to.equal(offerDescription);
+            expect(offer.compensation).to.equal(compensation);
+            // expect(offer.numberOfMaxHires).to.equal(numberOfMaxHires);
+            expect(offer.jobOfferStatus).to.equal(0);
+
+            const creator = await jContract.creatorProfiles(addr1.address);
+            expect(offer.creator.id).to.equal(creator.id);
+            expect(offer.creator.creatorAddress).to.equal(creator.creatorAddress);
+            expect(offer.creator.email).to.equal(creator.email);
+        });
+
+        it("Shold emit event after craeting the job offer", async function () {
+            const { jContract, addr1 } = await loadFixture(initialize);
+
+            // Create a creator profile
+            const email = "email@mail.com";
+            const name = "Anas El";
+            const tagline = "Aninoss";
+            const description = "This is a small description";
+
+            await jContract.connect(addr1).createCreatorProfile(email, name, tagline, description);
+
+            // Create a job offer
+            const title = "Blockchain Fullstack Developer";
+            const offerDescription = "This is a description for the blockchain fullstack devloper job offer";
+            const compensation = 10;
+
+            await expect(jContract.connect(addr1).createJobOffer(title, offerDescription, compensation))
+                .to.emit(jContract, "JobOfferCreated").withArgs(0);
+
+
+        });
+
+        it("Shold faild to create a job offer", async function () {
+            const { jContract, addr1, addr2 } = await loadFixture(initialize);
+
+            // Create a creator profile
+            const email = "email@mail.com";
+            const name = "Anas El";
+            const location = "Kenitra";
+            const bio = "This is a small description";
+
+            await jContract.connect(addr2).createApplicantProfile(email, name, location, bio);
+
+            // Create a job offer
+            const title = "Blockchain Fullstack Developer";
+            const offerDescription = "This is a description for the blockchain fullstack devloper job offer";
+            const componsation = 10;
+
+            await expect(jContract.connect(addr2).createJobOffer(title, offerDescription, componsation))
+                .to.be.revertedWith("Caller deos not have a creator profile!");
+        });
+
+    });
+
+    describe("Create Job Application", function () {
+
+        async function createAJobeOffer(jContract, addr1) {
+            // Create a job offer
+            const title = "Blockchain Fullstack Developer";
+            const offerDescription = "This is a description for the blockchain fullstack devloper job offer";
+            const compensation = 10;
+
+            await jContract.connect(addr1).createJobOffer(title, offerDescription, compensation);
+            return await jContract.jobOffers(0);
+        }
+
+        it("Shold create a job appliaction", async function () {
+            const { jContract, addr1, addr2 } = await loadFixture(initialize);
+
+            // Create a creator profile
+            const email = "email@mail.com";
+            const name = "Anas El";
+            const tagline = "Aninoss";
+            const description = "This is a small description";
+
+            await jContract.connect(addr1).createCreatorProfile(email, name, tagline, description);
+            const jobOffer = await createAJobeOffer(jContract, addr1);
+
+            // Create an applicant profile
+            const profileEmail = "profileEmail@mail.com";
+            const location = "Kenitra";
+            const bio = "This is a small description";
+
+            await jContract.connect(addr2).createApplicantProfile(profileEmail, name, location, bio);
+            const applicant = await jContract.applicantProfiles(addr2.address);
+
+            // Create an Application
+            const jobOfferId = jobOffer.id;
+            const coverLetter = "This is the job application cover letter";
+
+            await jContract.connect(addr2).createJobApplication(jobOfferId, coverLetter);
+
+            const application = await jContract.jobApplications(0);
+            expect(application.id).to.equal(0);
+            expect(application.jobOfferId).to.equal(jobOfferId);
+            expect(application.coverLetter).to.equal(coverLetter);
+
+            expect(application.applicant.id).to.equal(applicant.id);
+            expect(application.applicant.applicantAddress).to.equal(applicant.applicantAddress);
+            expect(application.applicant.email).to.equal(applicant.email);
+            expect(application.applicant.name).to.equal(applicant.name);
+            expect(application.applicant.profileType).to.equal(applicant.profileType);
+
+        });
+
+        it("Shold emit event after craeting the job application", async function () {
+            const { jContract, addr1, addr2 } = await loadFixture(initialize);
+
+            // Create a creator profile
+            const email = "email@mail.com";
+            const name = "Anas El";
+            const tagline = "Aninoss";
+            const description = "This is a small description";
+
+            await jContract.connect(addr1).createCreatorProfile(email, name, tagline, description);
+            const jobOffer = await createAJobeOffer(jContract, addr1);
+
+            // Create an applicant profile
+            const profileEmail = "profileEmail@mail.com";
+            const location = "Kenitra";
+            const bio = "This is a small description";
+
+            await jContract.connect(addr2).createApplicantProfile(profileEmail, name, location, bio);
+            const applicant = await jContract.applicantProfiles(addr2.address);
+
+            // Create an Application
+            const jobOfferId = jobOffer.id;
+            const coverLetter = "This is the job application cover letter";
+
+            await expect(jContract.connect(addr2).createJobApplication(jobOfferId, coverLetter))
+                .to.emit(jContract, "ApplicationSubmitted").withArgs(0);
+        });
+
+        it("Shold faild to create a job application", async function () {
+            const { jContract, addr1, addr2 } = await loadFixture(initialize);
+
+            // Create a creator profile
+            const email = "email@mail.com";
+            const name = "Anas El";
+            const tagline = "Aninoss";
+            const description = "This is a small description";
+
+            await jContract.connect(addr1).createCreatorProfile(email, name, tagline, description);
+            const jobOffer = await createAJobeOffer(jContract, addr1);
+
+            // Create an Application
+            const jobOfferId = jobOffer.id;
+            const coverLetter = "This is the job application cover letter";
+
+            await expect(jContract.connect(addr1).createJobApplication(jobOfferId, coverLetter))
+                .to.be.revertedWith("Caller deos not have an applicant profile!");
+        });
+
+        it("Shold faild to applied to a close job application", async function () {
+            const { jContract, addr1, addr2 } = await loadFixture(initialize);
+
+            // Create a creator profile
+            const email = "email@mail.com";
+            const name = "Anas El";
+            const tagline = "Aninoss";
+            const description = "This is a small description";
+
+            await jContract.connect(addr1).createCreatorProfile(email, name, tagline, description);
+            let jobOffer = await createAJobeOffer(jContract, addr1);
+            await jContract.alsterJobStatus(0, 2);
+
+            // Create an applicant profile
+            const profileEmail = "profileEmail@mail.com";
+            const location = "Kenitra";
+            const bio = "This is a small description";
+
+            await jContract.connect(addr2).createApplicantProfile(profileEmail, name, location, bio);
+
+            // Create an Application
+            const jobOfferId = jobOffer.id;
+            const coverLetter = "This is the job application cover letter";
+
+            await expect(jContract.connect(addr2).createJobApplication(jobOfferId, coverLetter))
+                .to.be.revertedWith("Job offer is closed!");
+        });
+
+    });
+
+});

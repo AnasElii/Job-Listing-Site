@@ -1,9 +1,9 @@
-// SPDE-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "./enums.sol";
 
-struct CreateProfile {
+struct CreatorProfile {
     uint id;
     address creatorAddress;
     string email;
@@ -24,4 +24,24 @@ struct ApplicantProfile{
     string bio;
     ProfileType profileType;
     uint[] applicationIDs;
+}
+
+struct JobOffer{
+    uint id;
+    string title;
+    string description;
+    uint compensation;
+    uint numberOfMaxHires;
+    uint numberHired;
+    CreatorProfile creator;
+    JobOfferStatus jobOfferStatus;
+    JobApplication[] applications;
+}
+
+struct JobApplication{
+    uint id;
+    uint jobOfferId;
+    string coverLetter;
+    ApplicantProfile applicant;
+    JobApplicationStatus status;
 }

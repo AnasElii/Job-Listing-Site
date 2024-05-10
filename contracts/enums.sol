@@ -5,3 +5,15 @@ enum ProfileType{
     Creator,
     Applicant
 }
+
+enum JobApplicationStatus{
+    Pending,
+    Approved,
+    Rejetcted
+}
+
+enum JobOfferStatus{
+    Open,
+    Filled,
+    Closed
+}
