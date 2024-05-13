@@ -28,7 +28,7 @@ describe("Jobs Contract", function () {
 
             await jContract.connect(addr1).createCreatorProfile(email, name, tagline, description);
 
-            const newCreator = await jContract.creatorProfiles(addr1.address);
+            const newCreator = await jContract.getCreatorProfile(addr1.address);
             expect(newCreator.id).to.equal(0);
             expect(newCreator.email).to.equal(email);
             expect(newCreator.name).to.equal(name);
@@ -81,7 +81,7 @@ describe("Jobs Contract", function () {
 
             await jContract.connect(addr2).createApplicantProfile(email, name, location, bio);
 
-            const newApplicant = await jContract.applicantProfiles(addr2.address);
+            const newApplicant = await jContract.getApplicantProfile(addr2.address);
             expect(newApplicant.id).to.equal(0);
             expect(newApplicant.email).to.equal(email);
             expect(newApplicant.name).to.equal(name);
@@ -143,7 +143,7 @@ describe("Jobs Contract", function () {
 
             await jContract.connect(addr1).createJobOffer(title, offerDescription, compensation, numberOfMaxHires);
 
-            const offer = await jContract.jobOffers(0);
+            const offer = await jContract.getJobOffer(0);
             expect(offer.id).to.equal(0);
             expect(offer.title).to.equal(title);
             expect(offer.description).to.equal(offerDescription);
@@ -151,7 +151,7 @@ describe("Jobs Contract", function () {
             // expect(offer.numberOfMaxHires).to.equal(numberOfMaxHires);
             expect(offer.jobOfferStatus).to.equal(0);
 
-            const creator = await jContract.creatorProfiles(addr1.address);
+            const creator = await jContract.getCreatorProfile(addr1.address);
             expect(offer.creator.id).to.equal(creator.id);
             expect(offer.creator.creatorAddress).to.equal(creator.creatorAddress);
             expect(offer.creator.email).to.equal(creator.email);
@@ -213,7 +213,7 @@ describe("Jobs Contract", function () {
             const numberOfMaxHires = 2;
 
             await jContract.connect(addr1).createJobOffer(title, offerDescription, compensation, numberOfMaxHires);
-            return await jContract.jobOffers(0);
+            return await jContract.getJobOffer(0);
         }
 
         it("Shold create a job appliaction", async function () {
@@ -234,7 +234,7 @@ describe("Jobs Contract", function () {
             const bio = "This is a small description";
 
             await jContract.connect(addr2).createApplicantProfile(profileEmail, name, location, bio);
-            const applicant = await jContract.applicantProfiles(addr2.address);
+            const applicant = await jContract.getApplicantProfile(addr2.address);
 
             // Create an Application
             const jobOfferId = jobOffer.id;
@@ -242,7 +242,7 @@ describe("Jobs Contract", function () {
 
             await jContract.connect(addr2).createJobApplication(jobOfferId, coverLetter);
 
-            const application = await jContract.jobApplications(0);
+            const application = await jContract.getJobApplication(0);
             expect(application.id).to.equal(0);
             expect(application.jobOfferId).to.equal(jobOfferId);
             expect(application.coverLetter).to.equal(coverLetter);
@@ -273,7 +273,7 @@ describe("Jobs Contract", function () {
             const bio = "This is a small description";
 
             await jContract.connect(addr2).createApplicantProfile(profileEmail, name, location, bio);
-            const applicant = await jContract.applicantProfiles(addr2.address);
+            const applicant = await jContract.getApplicantProfile(addr2.address);
 
             // Create an Application
             const jobOfferId = jobOffer.id;
@@ -343,7 +343,7 @@ describe("Jobs Contract", function () {
             const numberOfMaxHires = 2;
 
             await jContract.connect(addr1).createJobOffer(title, offerDescription, compensation, numberOfMaxHires);
-            return await jContract.jobOffers(0);
+            return await jContract.getJobOffer(0);
         }
 
         describe("Approve Application", function () {
@@ -379,8 +379,11 @@ describe("Jobs Contract", function () {
                 await jContract.connect(addr1).approveApplication(0);
                 await jContract.connect(addr1).approveApplication(1);
 
-                const application = await jContract.jobApplications(0);
-                expect(application.status).to.equal(1);
+                const application_1 = await jContract.getJobApplication(0);
+                expect(application_1.status).to.equal(1);
+
+                const application_2 = await jContract.getJobApplication(1);
+                expect(application_2.status).to.equal(1);
 
             });
 
@@ -494,8 +497,11 @@ describe("Jobs Contract", function () {
                 await jContract.connect(addr1).rejectApplication(0);
                 await jContract.connect(addr1).rejectApplication(1);
 
-                const application = await jContract.jobApplications(0);
-                expect(application.status).to.equal(2);
+                const application_1 = await jContract.getJobApplication(0);
+                expect(application_1.status).to.equal(2);
+
+                const application_2 = await jContract.getJobApplication(1);
+                expect(application_2.status).to.equal(2);
 
             });
 

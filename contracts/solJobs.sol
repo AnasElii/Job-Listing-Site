@@ -12,29 +12,29 @@ contract SolJobs {
     Counters.Counter private numberOfCreatorProfiles;
     Counters.Counter private numberOfApplicantProfiles;
 
-    mapping(address => CreatorProfile) public creatorProfiles;
-    mapping(address => ApplicantProfile) public applicantProfiles;
+    mapping(address => CreatorProfile) internal creatorProfiles;
+    mapping(address => ApplicantProfile) internal applicantProfiles;
 
     Counters.Counter private numberOfJobsCreated;
     Counters.Counter private numberOfJobApplications;
 
-    mapping(uint => JobOffer) public jobOffers;
-    mapping(uint => JobApplication) public jobApplications;
+    mapping(uint => JobOffer) internal jobOffers;
+    mapping(uint => JobApplication) internal jobApplications;
 
-    mapping(string => bool) public creatorEmail;
-    mapping(string => bool) public applicantEmail;
+    mapping(string => bool) private creatorEmail;
+    mapping(string => bool) private applicantEmail;
 
-    mapping(address => bool) public creatorAddress;
-    mapping(address => bool) public applicantAddress;
+    mapping(address => bool) private creatorAddress;
+    mapping(address => bool) private applicantAddress;
 
     modifier accountIsUnique(string calldata email) {
         require(
-            creatorEmail[email] == false && creatorAddress[msg.sender] == false,
+            creatorEmail[email] == false && creatorAddress[tx.origin] == false,
             creatorAlredyExistsMSG
         );
         require(
             applicantEmail[email] == false &&
-                applicantAddress[msg.sender] == false,
+                applicantAddress[tx.origin] == false,
             applicantAlredyExistsMSG
         );
 
@@ -43,7 +43,7 @@ contract SolJobs {
 
     modifier callerHasCreatorProfile() {
         require(
-            creatorAddress[msg.sender] == true,
+            creatorAddress[tx.origin] == true,
             callerHasNoCreatorProfileMSG
         );
 
@@ -52,7 +52,7 @@ contract SolJobs {
 
     modifier callerHasApplicantProfile() {
         require(
-            applicantAddress[msg.sender] == true,
+            applicantAddress[tx.origin] == true,
             callerHasNoApplicantProfileMSG
         );
 
@@ -76,6 +76,46 @@ contract SolJobs {
         manager = msg.sender;
     }
 
+    // Getters and Setters
+
+    function getNumberOfCreatorProfiles() public view returns (uint) {
+        return Counters.current(numberOfCreatorProfiles);
+    }
+
+    function getNumberOfApplicantProfiles() public view returns (uint) {
+        return Counters.current(numberOfApplicantProfiles);
+    }
+
+    function getNumberOfJobsCreated() public view returns (uint) {
+        return Counters.current(numberOfJobsCreated);
+    }
+
+    function getNumberOfJobApplications() public view returns (uint) {
+        return Counters.current(numberOfJobApplications);
+    }
+
+    function getCreatorProfile(address address_) public view returns(CreatorProfile memory){
+        CreatorProfile storage creator = creatorProfiles[address_];
+        return creator;
+    }
+
+    function getApplicantProfile(address address_) public view returns(ApplicantProfile memory){
+        ApplicantProfile storage applicant = applicantProfiles[address_];
+        return applicant;
+    }
+
+    function getJobOffer(uint id) public view returns(JobOffer memory){
+        JobOffer storage jobOffer = jobOffers[id];
+        return jobOffer;
+    }
+
+    function getJobApplication(uint id) public view returns(JobApplication memory){
+        JobApplication storage jobApplication = jobApplications[id];
+        return jobApplication;
+    }
+    
+    // Methods
+
     function createCreatorProfile(
         string calldata email,
         string calldata name,
@@ -83,7 +123,7 @@ contract SolJobs {
         string calldata description
     ) external accountIsUnique(email) {
         uint id = Counters.current(numberOfCreatorProfiles);
-        CreatorProfile storage newCreator = creatorProfiles[msg.sender];
+        CreatorProfile storage newCreator = creatorProfiles[tx.origin];
 
         newCreator.id = id;
         newCreator.email = email;
@@ -91,12 +131,12 @@ contract SolJobs {
         newCreator.tagline = tagline;
         newCreator.description = description;
 
-        newCreator.creatorAddress = msg.sender;
+        newCreator.creatorAddress = tx.origin;
         newCreator.profileType = ProfileType.Creator;
         newCreator.verified = false;
 
         creatorEmail[email] = true;
-        creatorAddress[msg.sender] = true;
+        creatorAddress[tx.origin] = true;
 
         Counters.increment(numberOfCreatorProfiles);
 
@@ -110,7 +150,7 @@ contract SolJobs {
         string calldata bio
     ) external accountIsUnique(email) {
         uint id = Counters.current(numberOfApplicantProfiles);
-        ApplicantProfile storage newApplicant = applicantProfiles[msg.sender];
+        ApplicantProfile storage newApplicant = applicantProfiles[tx.origin];
 
         newApplicant.id = id;
         newApplicant.email = email;
@@ -118,11 +158,11 @@ contract SolJobs {
         newApplicant.location = location;
         newApplicant.bio = bio;
 
-        newApplicant.applicantAddress = msg.sender;
+        newApplicant.applicantAddress = tx.origin;
         newApplicant.profileType = ProfileType.Applicant;
 
         applicantEmail[email] = true;
-        applicantAddress[msg.sender] = true;
+        applicantAddress[tx.origin] = true;
 
         Counters.increment(numberOfApplicantProfiles);
 
@@ -146,7 +186,7 @@ contract SolJobs {
         offer.numberHired = 0;
         offer.jobOfferStatus = JobOfferStatus.Open;
 
-        CreatorProfile memory creator = creatorProfiles[msg.sender];
+        CreatorProfile memory creator = creatorProfiles[tx.origin];
         offer.creator = creator;
 
         emit JobOfferCreated(id);
@@ -159,8 +199,8 @@ contract SolJobs {
         JobOfferStatus jobOfferStatus
     ) external {
         require(
-            jobOffers[jobOfferId].creator.creatorAddress == msg.sender ||
-                manager == msg.sender,
+            jobOffers[jobOfferId].creator.creatorAddress == tx.origin ||
+                manager == tx.origin,
             "Permission Denied!"
         );
         jobOffers[jobOfferId].jobOfferStatus = jobOfferStatus;
@@ -178,7 +218,7 @@ contract SolJobs {
         application.jobOfferId = jobOfferId;
         application.coverLetter = coverLetter;
 
-        ApplicantProfile memory applicant = applicantProfiles[msg.sender];
+        ApplicantProfile memory applicant = applicantProfiles[tx.origin];
         application.applicant = applicant;
         application.status = JobApplicationStatus.Pending;
 
