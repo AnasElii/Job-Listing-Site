@@ -1,10 +1,3 @@
-# Job-Listing-Site
- For this project, we’ll design and implement a full-stack remote job board application on a blockchain. The idea is to create a simple smart contract backend and a Next.js-powered frontend
-
-#Certainly! Here's a revised note:
-
----
-
 **Note: Regarding the Project Based on Educative.io's Course "Ethereum Blockchain Development with Solidity and Next.js"**
 
 Before proceeding with the implementation of any decentralized application (DApp) using the smart contract provided in this project, it's essential to consider the following:
@@ -21,4 +14,5 @@ For a more robust and scalable DApp development experience, consider exploring a
 
 --- 
 
-Feel free to adjust or expand upon this note as needed!
+# Job-Listing-Site
+ For this project, we’ll design and implement a full-stack remote job board application on a blockchain. The idea is to create a simple smart contract backend and a Next.js-powered frontend
